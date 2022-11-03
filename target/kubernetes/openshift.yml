@@ -1,0 +1,125 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    app.openshift.io/vcs-url: <<unknown>>
+    app.quarkus.io/build-timestamp: 2022-11-03 - 14:15:49 +0000
+  labels:
+    app.kubernetes.io/name: inner-outer-repo
+    app.kubernetes.io/version: "3.0"
+    app.openshift.io/runtime: quarkus
+  name: inner-outer-repo
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+  selector:
+    app.kubernetes.io/name: inner-outer-repo
+    app.kubernetes.io/version: "3.0"
+  type: ClusterIP
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  annotations:
+    app.openshift.io/vcs-url: <<unknown>>
+    app.quarkus.io/build-timestamp: 2022-11-03 - 14:15:49 +0000
+  labels:
+    app.kubernetes.io/name: inner-outer-repo
+    app.kubernetes.io/version: "3.0"
+    app.openshift.io/runtime: quarkus
+  name: inner-outer-repo
+spec: {}
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  labels:
+    app.kubernetes.io/name: inner-outer-repo
+    app.kubernetes.io/version: "3.0"
+  name: openjdk-11
+spec:
+  dockerImageRepository: registry.access.redhat.com/ubi8/openjdk-11
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  annotations:
+    app.openshift.io/vcs-url: <<unknown>>
+    app.quarkus.io/build-timestamp: 2022-11-03 - 14:15:49 +0000
+  labels:
+    app.kubernetes.io/name: inner-outer-repo
+    app.kubernetes.io/version: "3.0"
+    app.openshift.io/runtime: quarkus
+  name: inner-outer-repo
+spec:
+  output:
+    to:
+      kind: ImageStreamTag
+      name: inner-outer-repo:3.0
+  source:
+    binary: {}
+  strategy:
+    sourceStrategy:
+      from:
+        kind: ImageStreamTag
+        name: openjdk-11:1.14
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    app.openshift.io/vcs-url: <<unknown>>
+    app.quarkus.io/build-timestamp: 2022-11-03 - 14:15:49 +0000
+  labels:
+    app.kubernetes.io/version: "3.0"
+    app.kubernetes.io/name: inner-outer-repo
+    app.openshift.io/runtime: quarkus
+  name: inner-outer-repo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: inner-outer-repo
+      app.kubernetes.io/version: "3.0"
+  template:
+    metadata:
+      annotations:
+        app.openshift.io/vcs-url: <<unknown>>
+        app.quarkus.io/build-timestamp: 2022-11-03 - 14:15:49 +0000
+      labels:
+        app.kubernetes.io/version: "3.0"
+        app.kubernetes.io/name: inner-outer-repo
+        app.openshift.io/runtime: quarkus
+    spec:
+      containers:
+        - env:
+            - name: JAVA_APP_JAR
+              value: /deployments/quarkus-run.jar
+          image: quay.io/rh_ee_mbastug/inner-outer-repo:3.0
+          imagePullPolicy: Always
+          name: inner-outer-repo
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  annotations:
+    app.openshift.io/vcs-url: <<unknown>>
+    app.quarkus.io/build-timestamp: 2022-11-03 - 14:15:49 +0000
+  labels:
+    app.kubernetes.io/name: inner-outer-repo
+    app.kubernetes.io/version: "3.0"
+    app.openshift.io/runtime: quarkus
+  name: inner-outer-repo
+spec:
+  port:
+    targetPort: 8080
+  to:
+    kind: Service
+    name: inner-outer-repo
